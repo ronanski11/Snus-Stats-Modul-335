@@ -42,6 +42,7 @@ export class SnusEntryPage implements OnInit {
   capturedImage: string | null = null;
   currentLocation: { latitude: number; longitude: number } | null = null;
   isSubmitting = false;
+  isLoadingLocation = false;
 
   constructor(
     private fb: FormBuilder,
@@ -52,14 +53,14 @@ export class SnusEntryPage implements OnInit {
     this.entryForm = this.fb.group({
       snusId: ['', Validators.required],
       consWithInput: [''],
-      consWith: [[]], // Array of people
+      consWith: [[]],
     });
     addIcons({ camera, location, add, refresh, closeCircle, trash });
   }
 
   async ngOnInit() {
     await this.loadSnusProducts();
-    await this.getCurrentLocation();
+    // Don't automatically get location on init
   }
 
   async loadSnusProducts() {
@@ -96,16 +97,26 @@ export class SnusEntryPage implements OnInit {
   }
 
   async getCurrentLocation() {
+    this.isLoadingLocation = true;
     try {
       const position = await Geolocation.getCurrentPosition();
       this.currentLocation = {
         latitude: position.coords.latitude,
         longitude: position.coords.longitude,
       };
+      this.showToast('Location updated successfully');
     } catch (error) {
       console.error('Error getting location:', error);
       this.showToast('Failed to get location');
+      this.currentLocation = null;
+    } finally {
+      this.isLoadingLocation = false;
     }
+  }
+
+  clearLocation() {
+    this.currentLocation = null;
+    this.showToast('Location cleared');
   }
 
   addPerson() {
@@ -185,6 +196,7 @@ export class SnusEntryPage implements OnInit {
   private resetForm() {
     this.entryForm.reset();
     this.capturedImage = null;
+    this.currentLocation = null;
     this.entryForm.patchValue({ consWith: [] });
   }
 

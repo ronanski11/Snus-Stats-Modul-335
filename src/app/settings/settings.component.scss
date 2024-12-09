@@ -1,0 +1,14 @@
+:host {
+    ion-content {
+      --background: var(--ion-background-color);
+    }
+  
+    ion-list {
+      background: var(--ion-background-color);
+    }
+  
+    ion-item {
+      --background: var(--ion-background-color);
+      --color: var(--ion-text-color);
+    }
+  }

@@ -9,6 +9,7 @@ import {
   locationOutline,
   peopleOutline,
   trash,
+  chevronDownCircleOutline,
 } from 'ionicons/icons';
 import { addIcons } from 'ionicons';
 
@@ -45,7 +46,13 @@ export class SnusHistoryPage implements OnInit {
     private modalCtrl: ModalController,
     private alertCtrl: AlertController
   ) {
-    addIcons({ timeOutline, locationOutline, peopleOutline, trash });
+    addIcons({
+      timeOutline,
+      locationOutline,
+      peopleOutline,
+      trash,
+      chevronDownCircleOutline,
+    });
   }
 
   async ngOnInit() {
