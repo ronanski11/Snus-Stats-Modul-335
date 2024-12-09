@@ -1,0 +1,61 @@
+<!-- snus-history.page.html -->
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Snus History</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="ion-text-center ion-padding">
+    <ion-spinner></ion-spinner>
+    <p>Loading history...</p>
+  </div>
+
+  <!-- Error State -->
+  <ion-item *ngIf="error" color="danger">
+    <ion-icon name="alert-circle" slot="start"></ion-icon>
+    <ion-label>{{ error }}</ion-label>
+    <ion-button slot="end" (click)="loadHistory()">Retry</ion-button>
+  </ion-item>
+
+  <!-- History List -->
+  <ion-list *ngIf="!isLoading && !error">
+    <ion-item-sliding *ngFor="let consumption of consumptions">
+      <ion-item button (click)="openDetail(consumption)">
+        <!-- Thumbnail if available -->
+        <ion-thumbnail slot="start" *ngIf="consumption.image?.base64_data">
+          <img
+            [src]="'data:image/jpeg;base64,' + consumption.image?.base64_data"
+            [alt]="consumption.snus.brand"
+          />
+        </ion-thumbnail>
+
+        <ion-label>
+          <h2>{{ consumption.snus.brand }} - {{ consumption.snus.flavor }}</h2>
+          <p>{{ formatDate(consumption.consumed_at) }}</p>
+          <p *ngIf="consumption.cons_with?.length">
+            With: {{ consumption.cons_with.join(', ') }}
+          </p>
+        </ion-label>
+
+        <ion-note slot="end" color="medium">
+          {{ consumption.snus.strength_mg }}mg
+        </ion-note>
+      </ion-item>
+    </ion-item-sliding>
+  </ion-list>
+
+  <!-- Empty State -->
+  <div
+    *ngIf="!isLoading && !error && consumptions.length === 0"
+    class="ion-text-center ion-padding"
+  >
+    <ion-icon
+      name="document-outline"
+      style="font-size: 48px; color: var(--ion-color-medium)"
+    >
+    </ion-icon>
+    <p>No entries yet</p>
+  </div>
+</ion-content>
