@@ -6,8 +6,17 @@
 </ion-header>
 
 <ion-content>
-  <!-- Loading State -->
-  <div *ngIf="isLoading" class="ion-text-center ion-padding">
+  <!-- Add Refresher -->
+  <ion-refresher slot="fixed" (ionRefresh)="handleRefresh($event)">
+    <ion-refresher-content
+      pullingIcon="chevron-down-circle-outline"
+      refreshingSpinner="circles"
+    >
+    </ion-refresher-content>
+  </ion-refresher>
+
+  <!-- Loading State - only shown on initial load -->
+  <div *ngIf="isInitialLoading" class="ion-text-center ion-padding">
     <ion-spinner></ion-spinner>
     <p>Loading history...</p>
   </div>
@@ -20,35 +29,51 @@
   </ion-item>
 
   <!-- History List -->
-  <ion-list *ngIf="!isLoading && !error">
+  <ion-list *ngIf="!isInitialLoading && !error">
     <ion-item-sliding *ngFor="let consumption of consumptions">
       <ion-item button (click)="openDetail(consumption)">
         <!-- Thumbnail if available -->
-        <ion-thumbnail slot="start" *ngIf="consumption.image?.base64_data">
+        <ion-thumbnail
+          slot="start"
+          *ngIf="consumption.image?.base64_data"
+          style="display: flex; justify-content: center; align-items: center"
+        >
           <img
             [src]="'data:image/jpeg;base64,' + consumption.image?.base64_data"
             [alt]="consumption.snus.brand"
+            style="width: max-content; height: max-content"
           />
         </ion-thumbnail>
 
         <ion-label>
           <h2>{{ consumption.snus.brand }} - {{ consumption.snus.flavor }}</h2>
           <p>{{ formatDate(consumption.consumed_at) }}</p>
-          <p *ngIf="consumption.cons_with?.length">
-            With: {{ consumption.cons_with.join(', ') }}
-          </p>
+          <!--
+            <p *ngIf="consumption.cons_with?.length">
+              With: {{ consumption.cons_with.join(', ') }}
+            </p>
+            <p *ngIf="!consumption.cons_with?.length">Alone</p>
+          -->
         </ion-label>
 
         <ion-note slot="end" color="medium">
           {{ consumption.snus.strength_mg }}mg
         </ion-note>
       </ion-item>
+      <ion-item-options side="end">
+        <ion-item-option
+          color="danger"
+          (click)="deleteConsumption(consumption)"
+        >
+          <ion-icon slot="icon-only" name="trash"></ion-icon>
+        </ion-item-option>
+      </ion-item-options>
     </ion-item-sliding>
   </ion-list>
 
   <!-- Empty State -->
   <div
-    *ngIf="!isLoading && !error && consumptions.length === 0"
+    *ngIf="!isInitialLoading && !error && consumptions.length === 0"
     class="ion-text-center ion-padding"
   >
     <ion-icon

@@ -1,10 +1,15 @@
 // snus-history.page.ts
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonicModule, ModalController } from '@ionic/angular';
+import { IonicModule, ModalController, AlertController } from '@ionic/angular';
 import { SupabaseService } from '../services/supabase.service';
-import { SnusDetailModalComponent } from './snus-detail-modal.component';
-import { timeOutline, locationOutline } from 'ionicons/icons';
+import { SnusDetailModalComponent } from '../snus-detail-modal/snus-detail-modal.component';
+import {
+  timeOutline,
+  locationOutline,
+  peopleOutline,
+  trash,
+} from 'ionicons/icons';
 import { addIcons } from 'ionicons';
 
 interface SnusConsumption {
@@ -32,14 +37,15 @@ interface SnusConsumption {
 })
 export class SnusHistoryPage implements OnInit {
   consumptions: SnusConsumption[] = [];
-  isLoading = true;
   error: string | null = null;
+  isInitialLoading = true;
 
   constructor(
     private supabase: SupabaseService,
-    private modalCtrl: ModalController
+    private modalCtrl: ModalController,
+    private alertCtrl: AlertController
   ) {
-    addIcons({ timeOutline, locationOutline });
+    addIcons({ timeOutline, locationOutline, peopleOutline, trash });
   }
 
   async ngOnInit() {
@@ -48,7 +54,6 @@ export class SnusHistoryPage implements OnInit {
 
   async loadHistory() {
     try {
-      this.isLoading = true;
       const { data, error } = await this.supabase
         .getClient()
         .rpc('get_snus_history_with_geojson');
@@ -65,7 +70,15 @@ export class SnusHistoryPage implements OnInit {
       console.error('Error loading history:', error);
       this.error = 'Failed to load history';
     } finally {
-      this.isLoading = false;
+      this.isInitialLoading = false; // Only set to false, never back to true
+    }
+  }
+
+  async handleRefresh(event: any) {
+    try {
+      await this.loadHistory();
+    } finally {
+      event.target.complete();
     }
   }
 
@@ -78,6 +91,12 @@ export class SnusHistoryPage implements OnInit {
     });
 
     await modal.present();
+
+    // Handle the modal dismissal
+    const { data } = await modal.onWillDismiss();
+    if (data?.deleted) {
+      await this.deleteConsumption(consumption);
+    }
   }
 
   formatDate(dateString: string): string {
@@ -119,5 +138,63 @@ export class SnusHistoryPage implements OnInit {
       console.error('Error formatting location:', error, location);
       return 'Invalid location format';
     }
+  }
+
+  async deleteConsumption(consumption: SnusConsumption) {
+    const alert = await this.alertCtrl.create({
+      header: 'Confirm Deletion',
+      message: 'Are you sure you want to delete this entry?',
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel',
+        },
+        {
+          text: 'Delete',
+          role: 'destructive',
+          handler: async () => {
+            try {
+              // First, delete the consumption record
+              const { error: consumptionError } = await this.supabase
+                .getClient()
+                .from('snus_consumed')
+                .delete()
+                .eq('id', consumption.id);
+
+              if (consumptionError) throw consumptionError;
+
+              // If successful, remove from local array
+              this.consumptions = this.consumptions.filter(
+                (item) => item.id !== consumption.id
+              );
+
+              // If there was an image, delete it from the images table
+              if (consumption.image_id) {
+                const { error: imageError } = await this.supabase
+                  .getClient()
+                  .from('images')
+                  .delete()
+                  .eq('id', consumption.image_id);
+
+                if (imageError) {
+                  console.error('Error deleting image:', imageError);
+                  // Don't throw here as the main deletion was successful
+                }
+              }
+            } catch (error) {
+              console.error('Error deleting consumption:', error);
+              const errorAlert = await this.alertCtrl.create({
+                header: 'Error',
+                message: 'Failed to delete the entry. Please try again.',
+                buttons: ['OK'],
+              });
+              await errorAlert.present();
+            }
+          },
+        },
+      ],
+    });
+
+    await alert.present();
   }
 }

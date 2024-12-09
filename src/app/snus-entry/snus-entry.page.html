@@ -1,93 +1,116 @@
+<!-- snus-entry.component.html -->
 <ion-header>
   <ion-toolbar>
     <ion-title>New Snus Entry</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="ion-padding" style="padding-bottom: 3rem">
-  <form [formGroup]="entryForm" (ngSubmit)="submitEntry()">
-    <!-- Snus Selection -->
-    <ion-item>
-      <ion-label position="stacked">Select Snus</ion-label>
-      <ion-select formControlName="snusId" placeholder="Choose a snus">
-        <ion-select-option *ngFor="let snus of snusProducts" [value]="snus.id">
-          {{ snus.brand }} - {{ snus.flavor }} ({{ snus.strength_mg }}mg)
-        </ion-select-option>
-      </ion-select>
-    </ion-item>
-
-    <!-- Photo Capture -->
-    <ion-button
-      expand="block"
-      (click)="takePhoto()"
-      [disabled]="isSubmitting"
-      class="ion-margin-top"
-      color="tertiary"
-    >
-      <ion-icon slot="start" name="camera"></ion-icon>
-      {{ capturedImage ? 'Retake Photo' : 'Take Photo' }}
-    </ion-button>
-
-    <!-- Photo Preview -->
-    <ion-item *ngIf="capturedImage" lines="none">
-      <img
-        [src]="'data:image/jpeg;base64,' + capturedImage"
-        alt="Captured snus"
-        style="max-width: 100%; border-radius: 8px"
-      />
-    </ion-item>
-
-    <!-- Location Status -->
-    <ion-item lines="none" class="ion-margin-top">
-      <ion-icon name="location" slot="start"></ion-icon>
-      <ion-label>
-        {{ currentLocation ? 'Location captured' : 'Getting location...' }}
-      </ion-label>
-      <ion-button slot="end" fill="clear" (click)="getCurrentLocation()">
-        <ion-icon name="refresh"></ion-icon>
-      </ion-button>
-    </ion-item>
-
-    <!-- Consumed With -->
-    <ion-item-group class="ion-margin-top">
+<ion-content class="ion-padding">
+  <div class="content-wrapper">
+    <form [formGroup]="entryForm" (ngSubmit)="submitEntry()">
+      <!-- Snus Selection -->
       <ion-item>
-        <ion-label position="stacked">Consumed with</ion-label>
-        <ion-input
-          formControlName="consWithInput"
-          placeholder="Enter name"
-          (keyup.enter)="addPerson()"
-        ></ion-input>
+        <ion-label position="stacked">Select Snus</ion-label>
+        <ion-select formControlName="snusId" placeholder="Choose a snus">
+          <ion-select-option
+            *ngFor="let snus of snusProducts"
+            [value]="snus.id"
+          >
+            {{ snus.brand }} - {{ snus.flavor }} ({{ snus.strength_mg }}mg)
+          </ion-select-option>
+        </ion-select>
       </ion-item>
 
-      <!-- People Tags -->
-      <ion-item lines="none" *ngIf="entryForm.get('consWith')?.value?.length">
-        <ion-chip
-          *ngFor="let person of entryForm.get('consWith')?.value"
-          (click)="removePerson(person)"
-        >
-          <ion-label>{{ person }}</ion-label>
-          <ion-icon name="close-circle"></ion-icon>
-        </ion-chip>
-      </ion-item>
-    </ion-item-group>
-    <ion-button
-      slot="end"
-      (click)="addPerson()"
-      expand="block"
-      class="ion-margin-top"
-      color="tertiary"
-    >
-      <ion-icon name="add"></ion-icon> Add person
-    </ion-button>
+      <!-- Photo Section -->
+      <div class="ion-margin-top">
+        <!-- Photo Actions -->
+        <div class="photo-actions">
+          <ion-button
+            expand="block"
+            (click)="takePhoto()"
+            [disabled]="isSubmitting"
+            color="tertiary"
+            class="take-photo-btn"
+          >
+            <ion-icon slot="start" name="camera"></ion-icon>
+            {{ capturedImage ? 'Retake Photo' : 'Take Photo' }}
+          </ion-button>
 
-    <!-- Submit Button -->
-    <ion-button
-      expand="block"
-      type="submit"
-      class="ion-margin-top"
-      [disabled]="entryForm.invalid || isSubmitting"
-    >
-      Save Entry
-    </ion-button>
-  </form>
+          <ion-button
+            *ngIf="capturedImage"
+            expand="block"
+            (click)="removePhoto()"
+            [disabled]="isSubmitting"
+            color="danger"
+            fill="outline"
+          >
+            <ion-icon slot="icon-only" name="trash"></ion-icon>
+          </ion-button>
+        </div>
+
+        <!-- Photo Preview -->
+        <div *ngIf="capturedImage" class="photo-preview">
+          <img
+            [src]="'data:image/jpeg;base64,' + capturedImage"
+            alt="Captured snus"
+            class="preview-image"
+          />
+        </div>
+      </div>
+
+      <!-- Location Status -->
+      <ion-item lines="none" class="ion-margin-top">
+        <ion-icon name="location" slot="start"></ion-icon>
+        <ion-label>
+          {{ currentLocation ? 'Location captured' : 'Getting location...' }}
+        </ion-label>
+        <ion-button slot="end" fill="clear" (click)="getCurrentLocation()">
+          <ion-icon name="refresh"></ion-icon>
+        </ion-button>
+      </ion-item>
+
+      <!-- Consumed With -->
+      <ion-item-group class="ion-margin-top">
+        <ion-item>
+          <ion-label position="stacked">Consumed with</ion-label>
+          <ion-input
+            formControlName="consWithInput"
+            placeholder="Enter name"
+            (keyup.enter)="addPerson()"
+          ></ion-input>
+        </ion-item>
+
+        <!-- People Tags -->
+        <ion-item lines="none" *ngIf="entryForm.get('consWith')?.value?.length">
+          <ion-chip
+            *ngFor="let person of entryForm.get('consWith')?.value"
+            (click)="removePerson(person)"
+          >
+            <ion-label>{{ person }}</ion-label>
+            <ion-icon name="close-circle"></ion-icon>
+          </ion-chip>
+        </ion-item>
+      </ion-item-group>
+
+      <ion-button
+        slot="end"
+        (click)="addPerson()"
+        expand="block"
+        class="ion-margin-top"
+        color="tertiary"
+      >
+        <ion-icon name="add"></ion-icon> Add person
+      </ion-button>
+
+      <!-- Submit Button -->
+      <ion-button
+        expand="block"
+        type="submit"
+        class="ion-margin-top ion-margin-bottom submit-button"
+        [disabled]="entryForm.invalid || isSubmitting"
+      >
+        Save Entry
+      </ion-button>
+    </form>
+  </div>
 </ion-content>

@@ -1,0 +1,38 @@
+.content-wrapper {
+    padding-bottom: 60px;
+  }
+  
+  .photo-actions {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+  
+    .take-photo-btn {
+      flex: 1;
+    }
+  }
+  
+  .photo-preview {
+    overflow: hidden;
+    border-radius: 8px;
+    margin-bottom: 8px;
+  
+    .preview-image {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+  }
+  
+  ion-select {
+    width: 100%;
+  }
+  
+  ion-chip {
+    cursor: pointer;
+  }
+  
+  .submit-button {
+    margin-top: 16px;
+    margin-bottom: 16px;
+  }
