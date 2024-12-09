@@ -1,0 +1,7 @@
+{
+  "name": "snus-stats",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular-standalone"
+}
