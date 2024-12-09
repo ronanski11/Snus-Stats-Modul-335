@@ -4,7 +4,7 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="ion-padding">
+<ion-content class="ion-padding" style="padding-bottom: 3rem">
   <form [formGroup]="entryForm" (ngSubmit)="submitEntry()">
     <!-- Snus Selection -->
     <ion-item>
@@ -17,16 +17,16 @@
     </ion-item>
 
     <!-- Photo Capture -->
-    <ion-item lines="none" class="ion-margin-top">
-      <ion-button
-        expand="block"
-        (click)="takePhoto()"
-        [disabled]="isSubmitting"
-      >
-        <ion-icon slot="start" name="camera"></ion-icon>
-        {{ capturedImage ? 'Retake Photo' : 'Take Photo' }}
-      </ion-button>
-    </ion-item>
+    <ion-button
+      expand="block"
+      (click)="takePhoto()"
+      [disabled]="isSubmitting"
+      class="ion-margin-top"
+      color="tertiary"
+    >
+      <ion-icon slot="start" name="camera"></ion-icon>
+      {{ capturedImage ? 'Retake Photo' : 'Take Photo' }}
+    </ion-button>
 
     <!-- Photo Preview -->
     <ion-item *ngIf="capturedImage" lines="none">
@@ -57,9 +57,6 @@
           placeholder="Enter name"
           (keyup.enter)="addPerson()"
         ></ion-input>
-        <ion-button slot="end" fill="clear" (click)="addPerson()">
-          <ion-icon name="add"></ion-icon>
-        </ion-button>
       </ion-item>
 
       <!-- People Tags -->
@@ -73,6 +70,15 @@
         </ion-chip>
       </ion-item>
     </ion-item-group>
+    <ion-button
+      slot="end"
+      (click)="addPerson()"
+      expand="block"
+      class="ion-margin-top"
+      color="tertiary"
+    >
+      <ion-icon name="add"></ion-icon> Add person
+    </ion-button>
 
     <!-- Submit Button -->
     <ion-button

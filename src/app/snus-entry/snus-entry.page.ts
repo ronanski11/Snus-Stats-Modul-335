@@ -12,7 +12,7 @@ import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Geolocation } from '@capacitor/geolocation';
 import { LoadingController, ToastController } from '@ionic/angular';
 import { SupabaseService } from '../services/supabase.service';
-import { camera, location, add, refresh } from 'ionicons/icons';
+import { camera, location, add, refresh, closeCircle } from 'ionicons/icons';
 import { addIcons } from 'ionicons';
 
 interface Snus {
@@ -47,7 +47,7 @@ export class SnusEntryPage implements OnInit {
       consWithInput: [''],
       consWith: [[]], // Array of people
     });
-    addIcons({ camera, location, add, refresh });
+    addIcons({ camera, location, add, refresh, closeCircle });
   }
 
   async ngOnInit() {
