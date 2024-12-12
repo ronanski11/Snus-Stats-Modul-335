@@ -19,4 +19,8 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./snus-history/snus-history.page').then((m) => m.SnusHistoryPage),
   },
+  {
+    path: 'map',
+    loadComponent: () => import('./map/map.page').then( m => m.MapPage)
+  },
 ];

@@ -12,3 +12,9 @@
       --color: var(--ion-text-color);
     }
   }
+  .settings-header {
+    ion-label {
+      font-size: 1.2rem;
+      font-weight: 300;
+    }
+  }

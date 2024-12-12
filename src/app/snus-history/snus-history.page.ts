@@ -77,7 +77,7 @@ export class SnusHistoryPage implements OnInit {
       console.error('Error loading history:', error);
       this.error = 'Failed to load history';
     } finally {
-      this.isInitialLoading = false; // Only set to false, never back to true
+      this.isInitialLoading = false;
     }
   }
 
@@ -103,6 +103,9 @@ export class SnusHistoryPage implements OnInit {
     const { data } = await modal.onWillDismiss();
     if (data?.deleted) {
       await this.deleteConsumption(consumption);
+    } else if (data?.updated) {
+      // Reload the history to reflect the changes
+      await this.loadHistory();
     }
   }
 

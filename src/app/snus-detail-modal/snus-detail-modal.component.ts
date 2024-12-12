@@ -3,30 +3,109 @@ import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, ModalController } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { trash } from 'ionicons/icons';
+import { trash, create } from 'ionicons/icons';
+import { EditEntryComponent } from '../edit-entry/edit-entry.component';
+import { SupabaseService } from '../services/supabase.service';
+
+interface Snus {
+  id: string;
+  brand: string;
+  flavor: string;
+  strength_mg: number;
+}
+
+interface SnusConsumption {
+  id: string;
+  consumed_at: string;
+  location: any;
+  cons_with: string[];
+  image_id: string | null;
+  snus: Snus;
+  image?: {
+    base64_data: string;
+  } | null;
+}
+
+interface RPCResponse {
+  id: string;
+  consumed_at: string;
+  location: any;
+  cons_with: string[];
+  image_id: string | null;
+  snus: Snus | Snus[];
+  image: { base64_data: string } | { base64_data: string }[] | null;
+}
+
 @Component({
   selector: 'app-snus-detail-modal',
-  templateUrl: `./snus-detail-modal.component.html`,
+  templateUrl: './snus-detail-modal.component.html',
   standalone: true,
   imports: [CommonModule, IonicModule],
 })
 export class SnusDetailModalComponent {
-  @Input() consumption: any;
+  @Input() consumption!: SnusConsumption;
+  private wasUpdated = false;
+  constructor(
+    private modalCtrl: ModalController,
+    private supabase: SupabaseService
+  ) {
+    addIcons({ trash, create });
+  }
 
-  constructor(private modalCtrl: ModalController) {
-    addIcons({ trash });
+  async editConsumption() {
+    const modal = await this.modalCtrl.create({
+      component: EditEntryComponent,
+      componentProps: {
+        consumption: this.consumption,
+      },
+    });
+
+    await modal.present();
+
+    const { data } = await modal.onWillDismiss();
+    if (data?.updated) {
+      try {
+        const { data: updatedData, error } = (await this.supabase
+          .getClient()
+          .rpc('get_snus_history_with_geojson')
+          .eq('id', this.consumption.id)
+          .single()) as { data: RPCResponse | null; error: any };
+
+        if (error) throw error;
+
+        if (updatedData) {
+          this.consumption = {
+            ...updatedData,
+            snus: Array.isArray(updatedData.snus)
+              ? updatedData.snus[0]
+              : updatedData.snus,
+            image: Array.isArray(updatedData.image)
+              ? updatedData.image[0]
+              : updatedData.image,
+          } as SnusConsumption;
+        }
+        this.wasUpdated = true;
+      } catch (error) {
+        console.error('Error refreshing consumption data:', error);
+      }
+
+      this.modalCtrl.dismiss({
+        updated: true,
+      });
+    }
+  }
+
+  dismissModal() {
+    this.modalCtrl.dismiss({
+      updated: this.wasUpdated,
+    });
   }
 
   async deleteConsumption() {
-    // Dismiss modal with delete request
     this.modalCtrl.dismiss({
       deleted: true,
       consumptionId: this.consumption.id,
     });
-  }
-
-  dismissModal() {
-    this.modalCtrl.dismiss();
   }
 
   formatDate(dateString: string): string {
@@ -45,7 +124,6 @@ export class SnusDetailModalComponent {
     if (!location) return 'No location data';
 
     try {
-      // Handle GeoJSON format from PostGIS
       if (typeof location === 'object' && location.type === 'Point') {
         const [longitude, latitude] = location.coordinates;
         return `${Number(latitude).toFixed(6)}, ${Number(longitude).toFixed(
@@ -55,7 +133,6 @@ export class SnusDetailModalComponent {
         console.log('location:', location);
       }
 
-      // Fallback for POINT string format (if needed)
       if (typeof location === 'string') {
         const match = location.match(/POINT\((.*?)\)/);
         if (match) {

@@ -13,7 +13,11 @@ import {
   IonItem,
   IonLabel,
   IonToggle,
+  IonListHeader,
 } from '@ionic/angular/standalone';
+import { NotificationService } from '../services/notification.service';
+import { AsyncPipe } from '@angular/common';
+import { NotificationOptionsComponent } from '../notification-options/notification-options.component';
 
 @Component({
   selector: 'app-settings',
@@ -31,12 +35,18 @@ import {
     IonItem,
     IonLabel,
     IonToggle,
+    AsyncPipe,
+    IonListHeader,
+    NotificationOptionsComponent,
   ],
 })
 export class SettingsComponent implements OnInit {
   isDarkMode = false;
 
-  constructor(private platform: Platform) {}
+  constructor(
+    private platform: Platform,
+    public notificationService: NotificationService
+  ) {}
 
   async ngOnInit() {
     // Load saved theme preference
@@ -48,23 +58,22 @@ export class SettingsComponent implements OnInit {
   }
 
   async onThemeToggle(event: any) {
-    // Update the state immediately based on the toggle value
     this.isDarkMode = event.detail.checked;
-
-    // Apply the theme change
     await this.applyTheme(this.isDarkMode);
-
-    // Save the preference
     await Preferences.set({
       key: 'theme',
       value: this.isDarkMode ? 'dark' : 'light',
     });
   }
 
+  onNotificationToggle(event: any) {
+    console.log('attempting to toggle notifications');
+    this.notificationService.toggleNotifications(event.detail.checked);
+  }
+
   private async applyTheme(isDark: boolean) {
     document.body.classList.toggle('dark', isDark);
 
-    // Handle status bar color for mobile devices
     if (this.platform.is('capacitor')) {
       const { StatusBar, Style } = await import('@capacitor/status-bar');
       if (isDark) {

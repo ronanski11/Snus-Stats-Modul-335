@@ -15,7 +15,7 @@
     style="display: flex; justify-content: center"
   >
     <img
-      [src]="'data:image/jpeg;base64,' + consumption.image.base64_data"
+      [src]="'data:image/jpeg;base64,' + consumption.image?.base64_data"
       alt="Snus photo"
       style="border-radius: 8px; max-height: 300px; object-fit: cover"
     />
@@ -65,6 +65,15 @@
 
   <!-- Delete Button - moved outside of ion-item -->
   <div class="ion-padding">
+    <ion-button
+      expand="block"
+      (click)="editConsumption()"
+      color="primary"
+      class="ion-margin-bottom"
+    >
+      <ion-icon slot="start" name="create"></ion-icon>
+      Edit Entry
+    </ion-button>
     <ion-button
       expand="block"
       (click)="deleteConsumption()"

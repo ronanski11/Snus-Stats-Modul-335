@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { IonApp, IonRouterOutlet } from '@ionic/angular/standalone';
-import { SplashScreenService } from './services/splashscreen.service';
 import { Preferences } from '@capacitor/preferences';
+import { NotificationService } from './services/notification.service';
 
 @Component({
   selector: 'app-root',
@@ -10,25 +10,18 @@ import { Preferences } from '@capacitor/preferences';
   imports: [IonApp, IonRouterOutlet],
 })
 export class AppComponent {
-  constructor(private splashScreenService: SplashScreenService) {
+  constructor(private notificationService: NotificationService) {
     this.initializeApp();
   }
 
   async initializeApp() {
-    try {
-      await this.splashScreenService.initialize();
-
-      // Initialize theme
-      const { value } = await Preferences.get({ key: 'theme' });
-      if (value === 'dark') {
-        document.body.classList.add('dark');
-      }
-
-      // Add your app initialization logic here
-      // When ready, hide the splash screen
-      await this.splashScreenService.hide();
-    } catch (error) {
-      console.error('Error in app initialization:', error);
+    // Theme initialization
+    const { value } = await Preferences.get({ key: 'theme' });
+    if (value === 'dark') {
+      document.body.classList.add('dark');
     }
+
+    // Request notification permissions on app start
+    await this.notificationService.requestPermissions();
   }
 }
