@@ -1,50 +1,99 @@
 // notification-options.component.ts
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
   IonList,
   IonItem,
   IonLabel,
-  IonButton,
+  IonSelect,
+  IonSelectOption,
   IonDatetimeButton,
   IonDatetime,
   IonModal,
   IonContent,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
+  IonRange,
 } from '@ionic/angular/standalone';
 import { NotificationService } from '../services/notification.service';
+import { Subscription } from 'rxjs';
+import { Preferences } from '@capacitor/preferences';
 
 @Component({
   selector: 'app-notification-options',
   template: `
     <ion-content>
       <ion-list>
+        <!-- Notification Mode Selection -->
         <ion-item>
-          <ion-label>Set Reminder Time</ion-label>
-          <ion-datetime-button datetime="reminder-time"></ion-datetime-button>
+          <ion-label>Notification Type</ion-label>
+          <ion-select
+            [value]="notificationMode"
+            (ionChange)="onModeChange($event)"
+          >
+            <ion-select-option value="single">Single Time</ion-select-option>
+            <ion-select-option value="interval"
+              >Repeat Every Few Hours</ion-select-option
+            >
+          </ion-select>
         </ion-item>
 
-        <ion-modal [keepContentsMounted]="true">
-          <ng-template>
-            <ion-datetime
-              id="reminder-time"
-              presentation="time"
-              [preferWheel]="true"
-              [value]="selectedTime"
-              (ionChange)="onTimeSelected($event)"
-            ></ion-datetime>
-          </ng-template>
-        </ion-modal>
+        <!-- Single Time Settings -->
+        <ng-container *ngIf="notificationMode === 'single'">
+          <ion-item>
+            <ion-label>Set Reminder Time</ion-label>
+            <ion-datetime-button datetime="reminder-time"></ion-datetime-button>
+          </ion-item>
 
-        <ion-item *ngIf="scheduledTime">
-          <ion-label>
-            Next reminder scheduled for:
-            {{ scheduledTime | date : 'shortTime' }}
-          </ion-label>
-        </ion-item>
+          <ion-modal [keepContentsMounted]="true">
+            <ng-template>
+              <ion-datetime
+                id="reminder-time"
+                presentation="time"
+                [preferWheel]="true"
+                [value]="selectedTime"
+                (ionChange)="onTimeSelected($event)"
+              ></ion-datetime>
+            </ng-template>
+          </ion-modal>
+
+          <ion-item *ngIf="scheduledTime">
+            <ion-label>
+              Next reminder scheduled for:
+              {{ scheduledTime | date : 'shortTime' }}
+            </ion-label>
+          </ion-item>
+        </ng-container>
+
+        <!-- Interval Settings -->
+        <ng-container *ngIf="notificationMode === 'interval'">
+          <ion-item>
+            <ion-label>Hours Between Reminders</ion-label>
+            <ion-range
+              [value]="intervalHours"
+              [min]="1"
+              [max]="12"
+              [pin]="true"
+              [snaps]="true"
+              [step]="1"
+              (ionChange)="onIntervalChanged($event)"
+            >
+              <ion-label slot="start">1h</ion-label>
+              <ion-label slot="end">12h</ion-label>
+            </ion-range>
+          </ion-item>
+
+          <ion-item *ngIf="intervalHours">
+            <ion-label>
+              Reminders will repeat every {{ intervalHours }} hours
+            </ion-label>
+            <ion-label *ngIf="nextIntervalTimes.length > 0">
+              Next reminders at:
+              <div *ngFor="let time of nextIntervalTimes">
+                {{ time | date : 'shortTime' }}
+              </div>
+            </ion-label>
+          </ion-item>
+        </ng-container>
       </ion-list>
     </ion-content>
   `,
@@ -55,37 +104,83 @@ import { NotificationService } from '../services/notification.service';
     IonList,
     IonItem,
     IonLabel,
-    IonButton,
+    IonSelect,
+    IonSelectOption,
     IonDatetimeButton,
     IonDatetime,
     IonModal,
     IonContent,
-    IonHeader,
-    IonToolbar,
-    IonTitle,
+    IonRange,
   ],
 })
-export class NotificationOptionsComponent implements OnInit {
-  selectedTime: string = new Date().toISOString(); // Initialize with current time
+export class NotificationOptionsComponent implements OnInit, OnDestroy {
+  selectedTime: string = new Date().toISOString();
   scheduledTime: Date | null = null;
+  intervalHours: number = 2;
+  notificationMode: 'single' | 'interval' = 'single';
+  nextIntervalTimes: Date[] = [];
+
+  private subscription: Subscription = new Subscription();
 
   constructor(private notificationService: NotificationService) {}
 
-  ngOnInit() {
-    this.loadScheduledTime();
+  async ngOnInit() {
+    await this.loadSettings();
+
+    this.subscription.add(
+      this.notificationService.notificationMode$.subscribe((mode) => {
+        this.notificationMode = mode;
+        if (mode === 'interval') {
+          this.updateNextIntervalTimes();
+        }
+      })
+    );
   }
 
-  async loadScheduledTime() {
-    this.scheduledTime = await this.notificationService.getScheduledTime();
-    if (this.scheduledTime) {
-      this.selectedTime = this.scheduledTime.toISOString();
+  ngOnDestroy() {
+    this.subscription.unsubscribe();
+  }
+
+  private async loadSettings() {
+    const [scheduledTime, intervalHours, mode] = await Promise.all([
+      this.notificationService.getScheduledTime(),
+      this.notificationService.getIntervalHours(),
+      Preferences.get({ key: 'notificationMode' }),
+    ]);
+
+    this.scheduledTime = scheduledTime;
+    if (scheduledTime) {
+      this.selectedTime = scheduledTime.toISOString();
+    }
+
+    this.intervalHours = intervalHours || 2;
+    this.notificationMode = (mode.value as 'single' | 'interval') || 'single';
+
+    if (this.notificationMode === 'interval') {
+      this.updateNextIntervalTimes();
     }
   }
 
-  async onTimeSelected(event: any) {
+  private updateNextIntervalTimes() {
+    const now = new Date();
+    this.nextIntervalTimes = Array.from(
+      { length: Math.min(3, Math.floor(24 / this.intervalHours)) },
+      (_, i) =>
+        new Date(now.getTime() + (i + 1) * this.intervalHours * 60 * 60 * 1000)
+    );
+  }
+
+  async onModeChange(event: CustomEvent) {
+    const mode = event.detail.value as 'single' | 'interval';
+    await this.notificationService.setNotificationMode(mode);
+    if (mode === 'interval') {
+      this.updateNextIntervalTimes();
+    }
+  }
+
+  async onTimeSelected(event: CustomEvent) {
     const selectedTimeStr = event.detail.value;
     if (selectedTimeStr) {
-      // Create a new Date object for today with the selected time
       const today = new Date();
       const selectedTime = new Date(selectedTimeStr);
 
@@ -97,13 +192,21 @@ export class NotificationOptionsComponent implements OnInit {
         selectedTime.getMinutes()
       );
 
-      // If the time has already passed today, schedule for tomorrow
       if (scheduledTime < new Date()) {
         scheduledTime.setDate(scheduledTime.getDate() + 1);
       }
 
       await this.notificationService.scheduleNotification(scheduledTime);
       this.scheduledTime = scheduledTime;
+    }
+  }
+
+  async onIntervalChanged(event: CustomEvent) {
+    const hours = Number(event.detail.value);
+    if (hours && hours > 0) {
+      this.intervalHours = hours;
+      await this.notificationService.scheduleIntervalNotification(hours);
+      this.updateNextIntervalTimes();
     }
   }
 }

@@ -1,3 +1,50 @@
-<p>
-  notification-options works!
-</p>
+<ion-content>
+  <ion-list>
+    <!-- Existing time picker -->
+    <ion-item>
+      <ion-label>Set Reminder Time</ion-label>
+      <ion-datetime-button datetime="reminder-time"></ion-datetime-button>
+    </ion-item>
+
+    <ion-modal [keepContentsMounted]="true">
+      <ng-template>
+        <ion-datetime
+          id="reminder-time"
+          presentation="time"
+          [preferWheel]="true"
+          [value]="selectedTime"
+          (ionChange)="onTimeSelected($event)"
+        ></ion-datetime>
+      </ng-template>
+    </ion-modal>
+
+    <ion-item>
+      <ion-label *ngIf="scheduledTime">
+        Next reminder scheduled for:
+        {{ scheduledTime | date : "shortTime" }}
+      </ion-label>
+    </ion-item>
+    <ion-item></ion-item>
+
+    <!-- New interval settings -->
+    <ion-item>
+      <ion-label>Set Interval Reminder</ion-label>
+      <ion-input
+        type="number"
+        [value]="intervalHours"
+        (ionInput)="onIntervalChanged($event)"
+        placeholder="Hours between reminders"
+        min="1"
+        max="24"
+        slot="end"
+      ></ion-input>
+      <ion-label slot="end">hours</ion-label>
+    </ion-item>
+
+    <ion-item *ngIf="intervalHours">
+      <ion-label>
+        Reminders will repeat every {{ intervalHours }} hours
+      </ion-label>
+    </ion-item>
+  </ion-list>
+</ion-content>

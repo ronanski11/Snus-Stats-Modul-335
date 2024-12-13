@@ -6,7 +6,7 @@ import {
   IonContent,
 } from '@ionic/angular/standalone';
 import { ExploreContainerComponent } from '../explore-container/explore-container.component';
-import { SnusHistoryPage } from '../snus-history/snus-history.page';
+import { SnusMapComponent } from '../snus-map/snus-map.component';
 
 @Component({
   selector: 'app-tab3',
@@ -19,7 +19,7 @@ import { SnusHistoryPage } from '../snus-history/snus-history.page';
     IonTitle,
     IonContent,
     ExploreContainerComponent,
-    SnusHistoryPage,
+    SnusMapComponent,
   ],
 })
 export class Tab3Page {

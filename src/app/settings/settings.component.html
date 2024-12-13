@@ -32,7 +32,10 @@
       </ion-toggle>
     </ion-item>
   </ion-list>
-  <ion-list-header class="settings-header">
+  <ion-list-header
+    *ngIf="notificationService.notificationsEnabled$ | async"
+    class="settings-header"
+  >
     <ion-label>Notification Settings</ion-label>
   </ion-list-header>
   <app-notification-options
